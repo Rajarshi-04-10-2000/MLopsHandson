@@ -14,7 +14,7 @@ DATA_PATH = PROJECT_ROOT / "data" / "heart.csv"
 
 def create_eda_report(
     data_path: str | Path = DATA_PATH,
-    output_dir: str | Path = PROJECT_ROOT / "reports",
+    output_dir: str | Path = PROJECT_ROOT / "docs" / "images",
 ) -> list[Path]:
     """Save target-distribution and feature-correlation plots."""
     frame = pd.read_csv(data_path)
