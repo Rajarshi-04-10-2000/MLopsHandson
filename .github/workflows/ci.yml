@@ -23,16 +23,19 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Prepare dataset
-        run: python -m data.download_data
+        run: python data/download_data.py
+
+      - name: Generate EDA plots
+        run: python src/eda.py
 
       - name: Lint
         run: flake8 data src api tests
 
       - name: Train and log models
-        run: python -m src.train
+        run: python src/train.py
 
       - name: Run unit tests
-        run: python -m pytest -q
+        run: pytest -v tests/
 
       - name: Validate model artifact
         run: >-
@@ -45,15 +48,21 @@ jobs:
 
       - name: Verify container endpoints
         run: |
-          docker run --detach --rm --name heart-disease-api -p 8000:8000 heart-disease-api:ci
+          set -euo pipefail
+          container_name=heart-disease-api
+          docker run --detach --rm --name "$container_name" -p 8000:8000 heart-disease-api:ci
+          trap 'docker stop "$container_name" >/dev/null 2>&1 || true' EXIT
           for attempt in $(seq 1 30); do
-            if curl --fail http://localhost:8000/health; then
+            if curl --fail --silent --show-error http://localhost:8000/health; then
               break
             fi
             sleep 2
           done
-          curl --fail http://localhost:8000/health
-          curl --fail http://localhost:8000/metrics
+          if ! curl --fail --silent --show-error http://localhost:8000/health; then
+            docker logs "$container_name"
+            exit 1
+          fi
+          curl --fail --silent --show-error http://localhost:8000/metrics
           curl --fail --header "Content-Type: application/json" \
             --data '{"age":63,"sex":1,"cp":1,"trestbps":145,"chol":233,"fbs":1,"restecg":0,"thalach":150,"exang":0,"oldpeak":2.3,"slope":3,"ca":0,"thal":6}' \
             http://localhost:8000/predict

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import joblib
@@ -14,9 +15,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline
 
-from src.preprocessing import FEATURE_COLUMNS, HeartDiseasePreprocessor
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.preprocessing import (  # noqa: E402
+    FEATURE_COLUMNS,
+    HeartDiseasePreprocessor,
+)
+
 DATA_PATH = PROJECT_ROOT / "data" / "heart.csv"
 MODEL_PATH = PROJECT_ROOT / "models" / "heart_disease_model.pkl"
 SCORING = {
